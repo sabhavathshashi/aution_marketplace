@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ auction.title }}</h2>
+<p><strong>Description:</strong> {{ auction.description }}</p>
+<p><strong>Seller:</strong> {{ auction.seller_name }}</p>
+<p><strong>Current Price:</strong> ₹{{ auction.current_price }}</p>
+<p><strong>Status:</strong> {{ auction.status }}</p>
+<p><strong>Ends At:</strong> {{ auction.end_time }}</p>
+
+<hr>
+
+{% if auction.status in ['ACTIVE', 'EXTENDED'] %}
+<h3>Place a Bid</h3>
+<form method="POST"
+    onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Placing Bid...';">
+    <div class="form-group">
+        <label>Bid Amount (₹)</label>
+        <input type="number" step="0.01" name="bid_amount" min="{{ auction.current_price | float + 0.01 }}" required>
+    </div>
+    <button type="submit" class="btn">Place Bid</button>
+</form>
+{% else %}
+<p><em>This auction has ended or is not active.</em></p>
+{% endif %}
+
+<hr>
+
+<h3>Bid History</h3>
+{% if bids %}
+<ul>
+    {% for b in bids %}
+    <li><strong>{{ b.full_name }}</strong> bid ₹{{ b.bid_amount }} at {{ b.bid_time }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No bids yet.</p>
+{% endif %}
+{% endblock %}

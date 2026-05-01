@@ -1,0 +1,209 @@
+
+TECHNICAL DOCUMENTATION REPORT
+Online Auction Marketplace
+
+Database-Centric Architecture
+
+Team Members	Sabhavath Shashi (24951A66L0)
+Motam Shiva (24951A66K5)
+Shaik Yakub Pasha (25955A6623)
+Project Title	Online Auction Marketplace using Database Centric Architecture
+POs / PSOs	PO1, PO5, PO9 / PSO1, PSO2, PSO3
+Workshops	WKS1, WKS2, WKS3
+SDG Alignment	SDG 8 (Decent Work & Economic Growth), SDG 9 (Industry, Innovation & Infrastructure)
+
+Academic Year 2024-25
+ 
+1. Executive Summary
+The Online Auction Marketplace is a database-centric web application designed to facilitate real-time auction execution between buyers and sellers. The system leverages relational database capabilities as the core engine for business logic, ensuring data integrity, concurrency management, and transactional safety across all auction operations.
+The platform enables users to list items, place timed bids, process payments, and track auction history — all powered by a structured backend database with stored procedures, triggers, and constraints that enforce auction rules at the data layer rather than the application layer.
+
+2. Project Objectives
+The system is designed to achieve the following primary objectives:
+•	Provide a reliable, real-time auction platform accessible to buyers and sellers simultaneously.
+•	Implement all core auction logic (bid validation, time enforcement, winner determination) at the database level using stored procedures and triggers.
+•	Ensure full ACID compliance across all financial and bidding transactions.
+•	Support concurrent users placing bids without data corruption or race conditions.
+•	Deliver a user-friendly interface for item listing, bidding, and payment processing.
+•	Generate comprehensive reports and analytics on auctions, user activity, and revenue.
+•	Align with SDG 8 (Economic Growth) by enabling small sellers to access digital markets, and SDG 9 (Innovation) through a scalable database-driven architecture.
+
+3. System Requirements
+3.1 Functional Requirements
+The following functional requirements define what the system must do:
+3.1.1 User Management
+•	The system shall allow users to register with a unique email, password, full name, phone number, and address.
+•	The system shall authenticate users via secure login with hashed password verification.
+•	The system shall support two user roles: Seller and Buyer. A single account may hold both roles.
+•	The system shall allow users to view and update their profile information.
+•	The system shall allow administrators to suspend or ban accounts violating terms of service.
+•	The system shall maintain a user reputation/rating score updated after each completed transaction.
+3.1.2 Auction Item Listing
+•	Sellers shall be able to create a new auction listing by providing: item title, description, category, starting bid price, reserve price (optional), auction start time, and auction end time.
+•	Sellers shall be able to upload multiple images per listing.
+•	The system shall validate that the auction end time is at least 1 hour after the start time.
+•	Sellers shall be able to edit listings before the auction start time.
+•	The system shall support item categories (Electronics, Clothing, Books, Vehicles, Antiques, etc.) with category-specific attributes.
+•	The system shall allow sellers to set a 'Buy It Now' price in addition to the auction price.
+3.1.3 Bidding Engine
+•	Registered buyers shall be able to place bids on active auctions.
+•	The system shall reject any bid lower than or equal to the current highest bid.
+•	The system shall reject any bid placed after the auction end time.
+•	The system shall implement an automatic bid extension rule: if a bid is placed within the last 5 minutes of an auction, the auction end time shall be extended by 5 minutes.
+•	The system shall support proxy (automatic) bidding where users set a maximum bid and the system bids incrementally on their behalf.
+•	The system shall notify the outbid user via email/notification when a higher bid is placed.
+•	All bid validations shall be enforced using database-level triggers and stored procedures.
+3.1.4 Auction Lifecycle Management
+•	Auctions shall transition through the following states: PENDING, ACTIVE, EXTENDED, COMPLETED, CANCELLED.
+•	The system shall automatically change auction status from PENDING to ACTIVE at the scheduled start time.
+•	The system shall automatically finalize auctions at end time, determine the winning bidder, and initiate payment workflow.
+•	If no bids meet the reserve price, the system shall mark the auction as UNSOLD and notify the seller.
+•	Sellers shall be able to cancel a PENDING auction. Active auctions may only be cancelled by administrators.
+3.1.5 Payment Processing
+•	Winners shall be notified and prompted to complete payment within 48 hours of auction close.
+•	The system shall support multiple payment methods: credit/debit card, net banking, and digital wallets.
+•	The system shall hold payment in escrow until the seller confirms item dispatch.
+•	The system shall release payment to the seller upon buyer confirmation of receipt.
+•	The system shall handle payment failure scenarios with retry logic and auto-cancellation after 3 failed attempts.
+•	All payment transactions shall be logged with timestamps, amounts, and status for audit purposes.
+3.1.6 Notifications & Communication
+•	The system shall send email and in-app notifications for: outbid alerts, auction win, payment due, payment received, shipment updates, and system alerts.
+•	Users shall be able to configure their notification preferences.
+•	The system shall maintain a message inbox for buyer-seller communication within the platform.
+3.1.7 Search & Discovery
+•	The system shall provide full-text search across item titles and descriptions.
+•	The system shall support filtering by category, price range, auction status, and location.
+•	The system shall provide a 'Watchlist' feature where users can track auctions without bidding.
+•	The system shall display trending items and recommended auctions based on user browsing history.
+3.1.8 Reporting & Analytics
+•	The system shall generate reports for: total revenue per period, top-selling categories, user activity summary, auction success rate, and payment default rate.
+•	Admins shall have access to a dashboard showing live metrics: active auctions, active users, bids per minute, and pending payments.
+•	Sellers shall have access to their own analytics: total sold items, average sale price, and buyer ratings.
+
+3.2 Non-Functional Requirements
+3.2.1 Performance
+•	The system shall handle a minimum of 500 concurrent users without degradation.
+•	Bid processing (insert + validate + notify) shall complete within 200 milliseconds under normal load.
+•	Database queries for auction search shall return results within 1 second for datasets up to 100,000 listings.
+3.2.2 Security
+•	All passwords shall be stored using bcrypt hashing with a minimum salt factor of 10.
+•	All API endpoints shall require JWT-based authentication.
+•	The system shall implement input validation and parameterized queries to prevent SQL injection.
+•	Payment data shall never be stored on the application server; PCI-DSS compliant payment gateway shall be used.
+•	All data in transit shall be encrypted using TLS 1.2 or higher.
+3.2.3 Reliability & Availability
+•	The system shall maintain 99.5% uptime during peak hours (9 AM to 11 PM IST).
+•	The database shall perform automated backups every 6 hours with point-in-time recovery capability.
+•	The system shall gracefully handle partial failures — if the notification service is down, auctions must still process.
+3.2.4 Scalability
+•	The database schema shall be designed to support horizontal partitioning (sharding) of auction and bid tables.
+•	The architecture shall support deployment on cloud infrastructure with auto-scaling capabilities.
+
+4. Database-Centric Architecture
+Unlike traditional application-centric systems where business logic resides in the application layer, this project places the core auction logic inside the database. This approach ensures consistency regardless of the client accessing the system.
+4.1 Core Database Objects
+DB Object	Name	Purpose
+Stored Procedure	sp_PlaceBid	Validates and inserts a bid, updates current price, checks reserve
+Stored Procedure	sp_FinalizeAuction	Determines winner, updates status, triggers payment workflow
+Stored Procedure	sp_CreateListing	Creates auction record with all validations on dates and prices
+Trigger	trg_BidInsert	Fires on bid insert; validates bid > current price, auction is ACTIVE
+Trigger	trg_AuctionExtend	Fires on bid insert; extends end time if bid placed in last 5 min
+Trigger	trg_AuditPayment	Logs every payment status change to the payment_audit table
+View	vw_ActiveAuctions	Joins items, bids, users; used for homepage and search results
+View	vw_UserDashboard	Aggregates wins, active bids, watchlist for a user
+Cursor	cur_AutoFinalize	Iterates over expired auctions to call sp_FinalizeAuction in batch
+Function	fn_GetCurrentBid	Returns current highest bid and bidder for a given auction ID
+
+4.2 Core Database Schema (Key Tables)
+Table	Primary Key	Key Columns
+Users	user_id (INT)	email, password_hash, role, rating, created_at, is_active
+Categories	category_id (INT)	name, parent_category_id, description
+Items	item_id (INT)	title, description, seller_id (FK), category_id (FK), images
+Auctions	auction_id (INT)	item_id (FK), start_time, end_time, start_price, reserve_price, status, current_price, winner_id (FK)
+Bids	bid_id (INT)	auction_id (FK), bidder_id (FK), bid_amount, bid_time, is_auto_bid
+Payments	payment_id (INT)	auction_id (FK), payer_id (FK), amount, method, status, timestamp
+Notifications	notif_id (INT)	user_id (FK), type, message, is_read, created_at
+Watchlist	watch_id (INT)	user_id (FK), auction_id (FK), added_at
+AuditLog	log_id (INT)	table_name, operation, old_value, new_value, changed_by, changed_at
+
+5. Program Outcomes & PSO Mapping
+Code	Outcome	How This Project Addresses It
+PO1	Engineering Knowledge	Applies relational database theory, normalization, SQL, and DBMS concepts to design a production-grade schema.
+PO5	Modern Tool Usage	Uses MySQL/PostgreSQL with stored procedures, triggers, and cursors; integrates with web-based frontend tools.
+PO9	Individual & Team Work	Project developed collaboratively across 3 team members with defined module ownership.
+PSO1	Software Development	Builds a complete full-stack auction system applying software engineering lifecycle principles.
+PSO2	Database Application	Demonstrates advanced database-centric application development with real-world auction logic embedded in the DB layer.
+PSO3	Problem Solving	Addresses concurrency, real-time bid validation, and automatic auction lifecycle management as core engineering problems.
+
+6. SDG Alignment
+SDG 8 — Decent Work and Economic Growth
+The Online Auction Marketplace directly supports SDG 8 by:
+•	Empowering small business owners, artisans, and individual sellers to reach a wider buyer base through a digital auction platform.
+•	Reducing barriers to market entry for informal sellers who lack access to traditional retail infrastructure.
+•	Creating a competitive price-discovery mechanism that ensures sellers receive fair market value for their goods.
+•	Generating employment opportunities in platform moderation, logistics support, and payment services.
+SDG 9 — Industry, Innovation and Infrastructure
+The project contributes to SDG 9 by:
+•	Demonstrating innovative database-centric architecture as an alternative to conventional application-layer-heavy systems.
+•	Building resilient digital infrastructure capable of handling high-concurrency auction transactions.
+•	Applying database automation (triggers, stored procedures) to reduce manual processing, increasing operational efficiency.
+•	Creating a replicable technical model that can be adapted for government procurement auctions, commodity markets, and public tenders.
+
+7. Workshop Coverage
+Workshop	Topic Area	Application in This Project
+WKS1	Database Design & Normalization	Schema design is normalized to 3NF/BCNF. All entity relationships are modeled with proper primary and foreign keys, avoiding redundancy in auction and bid tables.
+WKS2	Advanced SQL & Procedural DB	Extensive use of stored procedures (sp_PlaceBid, sp_FinalizeAuction), triggers (bid validation, auto-extension), views, cursors, and transactions with COMMIT/ROLLBACK.
+WKS3	Web Application Integration	Database layer is connected to a web frontend via a RESTful API layer. Forms, search, and dashboards interact with views and stored procedures rather than raw SQL queries.
+
+8. Technology Stack
+Layer	Technology	Role
+Database	MySQL 8.x / PostgreSQL 15	Primary data store; hosts all procedures, triggers, views, and constraints.
+Backend API	Node.js + Express.js	REST API server; calls stored procedures and passes results to frontend.
+Frontend	HTML5, CSS3, JavaScript	User interface for listing, bidding, dashboard, and payment pages.
+Authentication	JWT (JSON Web Tokens)	Stateless session management for login and role-based access control.
+Real-Time Updates	WebSocket / Socket.io	Live bid price updates pushed to all watchers of an active auction.
+Payment Gateway	Razorpay / Stripe (Sandbox)	Handles payment collection and escrow; PCI-DSS compliant.
+Email Service	Nodemailer + SMTP	Sends transactional emails for bid alerts, win notifications, and payment receipts.
+Hosting	AWS EC2 / Heroku (Dev)	Cloud deployment for both application server and database server.
+
+9. Use Case Summary
+9.1 Primary Actors
+•	Guest User — Can browse active auctions and search items; cannot bid.
+•	Registered Buyer — Can bid, use watchlist, make payments, and leave seller ratings.
+•	Registered Seller — Can create listings, manage auctions, view analytics, and receive payments.
+•	Administrator — Full system access; can manage users, categories, resolve disputes, and view all reports.
+•	System (Automated) — Executes scheduled jobs for auction finalization, payment reminders, and status transitions.
+9.2 Key Use Cases
+#	Use Case	Description
+UC-01	Register Account	New user creates account with email verification.
+UC-02	Create Auction Listing	Seller submits item with auction parameters; system validates and schedules.
+UC-03	Place Bid	Buyer submits bid; sp_PlaceBid validates, inserts, and updates current price atomically.
+UC-04	Proxy Bidding	Buyer sets max bid; system auto-bids on their behalf up to the maximum.
+UC-05	Auction Auto-Finalization	System calls sp_FinalizeAuction at end time; winner is notified and payment workflow starts.
+UC-06	Process Payment	Winner completes payment through gateway; escrow holds funds until delivery confirmed.
+UC-07	Dispute Resolution	Buyer raises dispute; admin reviews evidence and can force refund or payment release.
+UC-08	View Analytics	Seller views per-auction reports; admin views platform-wide dashboards.
+
+10. Constraints & Assumptions
+10.1 Constraints
+•	The system is limited to Indian Rupee (INR) transactions in the initial version.
+•	A maximum of 10 images per auction listing is enforced to manage storage costs.
+•	Auction durations must be between 1 hour and 30 days.
+•	Physical delivery logistics are outside the scope of this system; sellers are responsible for shipping.
+•	The platform does not support auction of illegal, restricted, or prohibited items — enforced via category restrictions and moderation.
+10.2 Assumptions
+•	Users have access to a reliable internet connection during bidding.
+•	The database server runs in a timezone-aware configuration (IST, UTC+5:30).
+•	Email deliverability is handled by a third-party SMTP provider with adequate uptime.
+•	All users accept the terms of service, including the 48-hour payment window upon winning.
+
+11. Risk Register
+Risk	Severity	Mitigation Strategy
+Concurrent bids causing race conditions	High	Use database row-level locking (SELECT FOR UPDATE) inside sp_PlaceBid to serialize bid inserts.
+Auction end time not enforced in real time	Medium	Scheduled cron job + server-side timestamp validation in sp_PlaceBid.
+Payment default by winner	Medium	Auto-cancel after 48 hrs; re-list option for seller; track default rate per user.
+Shill bidding (fake bids by seller)	High	Restrict sellers from bidding on their own listings via DB constraint + trigger.
+Database single point of failure	High	Implement master-replica replication; automated failover configuration.
+Data loss from unanticipated shutdown	Medium	All auction state transitions are ACID transactions; automatic rollback on failure.
+
+End of Technical Documentation  |  Online Auction Marketplace  |  2024-25

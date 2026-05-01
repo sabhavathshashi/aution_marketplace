@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Active Auctions</h2>
+{% if auctions %}
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Seller</th>
+            <th>Current Price</th>
+            <th>Ends At</th>
+            <th>Action</th>
+        </tr>
+        {% for a in auctions %}
+        <tr>
+            <td>{{ a.title }}</td>
+            <td>{{ a.description }}</td>
+            <td>{{ a.seller_name }}</td>
+            <td>₹{{ a.current_price }}</td>
+            <td>{{ a.end_time }}</td>
+            <td><a href="{{ url_for('auction', auction_id=a.auction_id) }}" class="btn">View & Bid</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No active auctions available right now.</p>
+{% endif %}
+{% endblock %}

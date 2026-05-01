@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Dashboard</h2>
+<p><strong>Total Bids Placed:</strong> {{ data.total_bids if data else 0 }}</p>
+
+<h3>Your Auctions (Wins or Sales)</h3>
+{% if auctions %}
+    <table>
+        <tr>
+            <th>Item</th>
+            <th>Final/Current Price</th>
+            <th>Status</th>
+            <th>Role</th>
+        </tr>
+        {% for a in auctions %}
+        <tr>
+            <td>{{ a.title }}</td>
+            <td>₹{{ a.current_price }}</td>
+            <td>{{ a.status }}</td>
+            <td>
+                {% if a.winner_id == session.user_id %} Winner {% endif %}
+                {% if a.seller_id == session.user_id %} Seller {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>You have no related auctions yet.</p>
+{% endif %}
+{% endblock %}
