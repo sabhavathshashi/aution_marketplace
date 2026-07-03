@@ -1,30 +1,115 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Your Dashboard</h2>
-<p><strong>Total Bids Placed:</strong> {{ data.total_bids if data else 0 }}</p>
+<section class="section-block">
+    <div class="section-header">
+        <div>
+            <p class="eyebrow">Your workspace</p>
+            <h2>Welcome back, {{ session.full_name }}</h2>
+        </div>
+        <a class="btn btn-small" href="{{ url_for('profile') }}">Edit Profile</a>
+    </div>
 
-<h3>Your Auctions (Wins or Sales)</h3>
-{% if auctions %}
-    <table>
-        <tr>
-            <th>Item</th>
-            <th>Final/Current Price</th>
-            <th>Status</th>
-            <th>Role</th>
-        </tr>
-        {% for a in auctions %}
-        <tr>
-            <td>{{ a.title }}</td>
-            <td>₹{{ a.current_price }}</td>
-            <td>{{ a.status }}</td>
-            <td>
-                {% if a.winner_id == session.user_id %} Winner {% endif %}
-                {% if a.seller_id == session.user_id %} Seller {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-{% else %}
-    <p>You have no related auctions yet.</p>
-{% endif %}
+    <div class="feature-grid">
+        <article class="info-card">
+            <h3>Total Bids</h3>
+            <p>{{ data.total_bids if data else 0 }}</p>
+        </article>
+        <article class="info-card">
+            <h3>Watchlist Items</h3>
+            <p>{{ data.watchlist_count if data else 0 }}</p>
+        </article>
+        <article class="info-card">
+            <h3>Account Type</h3>
+            <p>{{ session.role }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-block">
+    <div class="section-header">
+        <div>
+            <p class="eyebrow">Activity</p>
+            <h2>Active auctions and history</h2>
+        </div>
+        {% if session.role == 'Seller' %}
+            <a class="btn btn-small" href="{{ url_for('add_auction') }}">List an Item</a>
+        {% endif %}
+    </div>
+
+    <h3>Your auctions</h3>
+    {% if auctions %}
+        <div class="auction-grid">
+            {% for a in auctions %}
+                <article class="auction-card">
+                    <div class="auction-card-top">
+                        <h3>{{ a.title }}</h3>
+                        <span class="status-pill">{{ a.status }}</span>
+                    </div>
+                    <p>{{ a.description }}</p>
+                    <div class="auction-meta">
+                        <span>Current: ₹{{ a.current_price }}</span>
+                        <span>Ends: {{ a.end_time }}</span>
+                    </div>
+                    <a class="btn btn-small" href="{{ url_for('auction', auction_id=a.auction_id) }}">Open Auction</a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">You do not have any related auctions yet.</div>
+    {% endif %}
+</section>
+
+<section class="section-block">
+    <div class="section-header">
+        <div>
+            <p class="eyebrow">Marketplace</p>
+            <h2>Open auctions available now</h2>
+        </div>
+    </div>
+    {% if marketplace_auctions %}
+        <div class="auction-grid">
+            {% for a in marketplace_auctions %}
+                <article class="auction-card">
+                    <div class="auction-card-top">
+                        <h3>{{ a.title }}</h3>
+                        <span class="status-pill">Live</span>
+                    </div>
+                    <p>{{ a.description }}</p>
+                    <div class="auction-meta">
+                        <span>Seller: {{ a.seller_name }}</span>
+                        <span>Current: ₹{{ a.current_price }}</span>
+                    </div>
+                    <div class="auction-meta">
+                        <span>Ends: {{ a.end_time }}</span>
+                    </div>
+                    <a class="btn btn-small" href="{{ url_for('auction', auction_id=a.auction_id) }}">View & Bid</a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No active auctions are available right now.</div>
+    {% endif %}
+</section>
+
+<section class="section-block">
+    <h3>Recent bid history</h3>
+    {% if bid_history %}
+        <table>
+            <tr>
+                <th>Auction</th>
+                <th>Bid Amount</th>
+                <th>Placed At</th>
+            </tr>
+            {% for bid in bid_history %}
+            <tr>
+                <td>{{ bid.title }}</td>
+                <td>₹{{ bid.bid_amount }}</td>
+                <td>{{ bid.bid_time }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <div class="empty-state">You have not placed any bids yet.</div>
+    {% endif %}
+</section>
 {% endblock %}

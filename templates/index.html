@@ -1,28 +1,77 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Active Auctions</h2>
-{% if auctions %}
-    <table>
-        <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Seller</th>
-            <th>Current Price</th>
-            <th>Ends At</th>
-            <th>Action</th>
-        </tr>
-        {% for a in auctions %}
-        <tr>
-            <td>{{ a.title }}</td>
-            <td>{{ a.description }}</td>
-            <td>{{ a.seller_name }}</td>
-            <td>₹{{ a.current_price }}</td>
-            <td>{{ a.end_time }}</td>
-            <td><a href="{{ url_for('auction', auction_id=a.auction_id) }}" class="btn">View & Bid</a></td>
-        </tr>
-        {% endfor %}
-    </table>
-{% else %}
-    <p>No active auctions available right now.</p>
-{% endif %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Discover, bid, win</span>
+        <h1>Modern auctions designed for buyers, sellers, and growing communities.</h1>
+        <p>Join a secure, database-driven marketplace where every listing is easy to manage, every bid is transparent, and every winning moment feels exciting.</p>
+        <div class="hero-actions">
+            {% if session.user_id %}
+                <a class="btn" href="{{ url_for('dashboard') }}">Open Dashboard</a>
+            {% else %}
+                <a class="btn" href="{{ url_for('register') }}">Create Account</a>
+                <a class="btn btn-secondary" href="{{ url_for('login') }}">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-card">
+        <h3>Why auctioneers love it</h3>
+        <ul class="feature-list">
+            <li>Live bidding with instant status updates</li>
+            <li>Role-aware access for buyers and sellers</li>
+            <li>Clean, responsive experience on any device</li>
+        </ul>
+    </div>
+</section>
+
+<section class="feature-grid">
+    <article class="info-card">
+        <h3>For Sellers</h3>
+        <p>List items in minutes, set pricing, and reach buyers with a polished storefront experience.</p>
+    </article>
+    <article class="info-card">
+        <h3>For Buyers</h3>
+        <p>Browse active opportunities, place bids confidently, and track your wins from a single dashboard.</p>
+    </article>
+    <article class="info-card">
+        <h3>Built for Trust</h3>
+        <p>Database-backed rules keep auction behavior consistent, secure, and fair for everyone involved.</p>
+    </article>
+</section>
+
+<section class="section-block">
+    <div class="section-header">
+        <div>
+            <p class="eyebrow">Live marketplace</p>
+            <h2>Explore active auctions</h2>
+        </div>
+        {% if session.user_id and session.role == 'Seller' %}
+            <a class="btn btn-small" href="{{ url_for('add_auction') }}">List an Item</a>
+        {% endif %}
+    </div>
+
+    {% if auctions %}
+        <div class="auction-grid">
+            {% for a in auctions %}
+                <article class="auction-card">
+                    <div class="auction-card-top">
+                        <h3>{{ a.title }}</h3>
+                        <span class="status-pill">Live</span>
+                    </div>
+                    <p>{{ a.description }}</p>
+                    <div class="auction-meta">
+                        <span>Seller: {{ a.seller_name }}</span>
+                        <span>Price: ₹{{ a.current_price }}</span>
+                    </div>
+                    <div class="auction-meta">
+                        <span>Ends: {{ a.end_time }}</span>
+                    </div>
+                    <a href="{{ url_for('auction', auction_id=a.auction_id) }}" class="btn btn-small">View & Bid</a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No active auctions are available right now. Please check back soon.</div>
+    {% endif %}
+</section>
 {% endblock %}

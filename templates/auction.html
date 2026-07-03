@@ -1,38 +1,77 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ auction.title }}</h2>
-<p><strong>Description:</strong> {{ auction.description }}</p>
-<p><strong>Seller:</strong> {{ auction.seller_name }}</p>
-<p><strong>Current Price:</strong> ₹{{ auction.current_price }}</p>
-<p><strong>Status:</strong> {{ auction.status }}</p>
-<p><strong>Ends At:</strong> {{ auction.end_time }}</p>
-
-<hr>
-
-{% if auction.status in ['ACTIVE', 'EXTENDED'] %}
-<h3>Place a Bid</h3>
-<form method="POST"
-    onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Placing Bid...';">
-    <div class="form-group">
-        <label>Bid Amount (₹)</label>
-        <input type="number" step="0.01" name="bid_amount" min="{{ auction.current_price | float + 0.01 }}" required>
+<section class="section-block">
+    <div class="section-header">
+        <div>
+            <p class="eyebrow">Live auction</p>
+            <h2>{{ auction.title }}</h2>
+        </div>
+        <span class="status-pill">{{ auction.status }}</span>
     </div>
-    <button type="submit" class="btn">Place Bid</button>
-</form>
-{% else %}
-<p><em>This auction has ended or is not active.</em></p>
-{% endif %}
 
-<hr>
+    <p><strong>Description:</strong> {{ auction.description }}</p>
+    <p><strong>Seller:</strong> {{ auction.seller_name }}</p>
+    <p><strong>Current Highest Bid:</strong> ₹<span id="current-price">{{ auction.current_price }}</span></p>
+    <p><strong>Ends At:</strong> {{ auction.end_time }}</p>
 
-<h3>Bid History</h3>
-{% if bids %}
-<ul>
-    {% for b in bids %}
-    <li><strong>{{ b.full_name }}</strong> bid ₹{{ b.bid_amount }} at {{ b.bid_time }}</li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>No bids yet.</p>
-{% endif %}
+    {% if auction.status in ['ACTIVE', 'EXTENDED'] %}
+    <div class="form-shell">
+        <h3>Place a Bid</h3>
+        <form id="bid-form" method="POST">
+            <div class="form-group">
+                <label>Bid Amount (₹)</label>
+                <input type="number" step="0.01" name="bid_amount" id="bid_amount" min="{{ auction.current_price | float + 0.01 }}" required>
+            </div>
+            <button type="submit" class="btn">Place Bid</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="empty-state">This auction has ended or is not active.</div>
+    {% endif %}
+</section>
+
+<section class="section-block">
+    <h3>Bid History</h3>
+    {% if bids %}
+    <ul id="bid-history-list">
+        {% for b in bids %}
+        <li><strong>{{ b.full_name }}</strong> bid ₹{{ b.bid_amount }} at {{ b.bid_time }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No bids yet.</p>
+    {% endif %}
+</section>
+
+<script>
+const bidForm = document.getElementById('bid-form');
+if (bidForm) {
+    bidForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const formData = new FormData(bidForm);
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('current-price').textContent = data.auction.current_price;
+            const historyList = document.getElementById('bid-history-list');
+            if (historyList && data.bids && data.bids.length) {
+                historyList.innerHTML = '';
+                data.bids.forEach(function (bid) {
+                    const item = document.createElement('li');
+                    item.innerHTML = `<strong>${bid.full_name}</strong> bid ₹${bid.bid_amount} at ${bid.bid_time}`;
+                    historyList.appendChild(item);
+                });
+            }
+            bidForm.reset();
+            window.location.reload();
+        } else {
+            alert(data.message || 'Unable to place bid.');
+        }
+    });
+}
+</script>
 {% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-shell">
+    <h2>Your Profile</h2>
+    <p>Keep your contact details current so buyers and sellers can reach you easily.</p>
+    <form method="POST">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name" value="{{ profile.full_name if profile else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" value="{{ profile.email if profile else '' }}" disabled>
+        </div>
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" name="phone_number" value="{{ profile.phone_number if profile else '' }}">
+        </div>
+        <div class="form-group">
+            <label>Address</label>
+            <textarea name="address" rows="4">{{ profile.address if profile else '' }}</textarea>
+        </div>
+        <button type="submit" class="btn">Save Profile</button>
+    </form>
+</div>
+{% endblock %}
