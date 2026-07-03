@@ -30,7 +30,7 @@ def serialize_for_json(value):
 
 def get_auction_state(cursor, auction_id):
     cursor.execute("""
-        SELECT a.*, i.title, i.description, u.full_name AS seller_name
+        SELECT a.*, i.title, i.description, i.seller_id, u.full_name AS seller_name
         FROM Auctions a
         JOIN Items i ON a.item_id = i.item_id
         JOIN Users u ON i.seller_id = u.user_id
@@ -228,6 +228,13 @@ def auction(auction_id):
         if 'user_id' not in session:
             flash("Please log in to place a bid.", "error")
             return redirect(url_for('login'))
+
+        auction_details, _ = get_auction_state(cursor, auction_id)
+        if auction_details and auction_details.get('seller_id') == session['user_id']:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=False, message='You cannot bid on your own auction.'), 403
+            flash("You cannot bid on your own auction.", "error")
+            return redirect(url_for('auction', auction_id=auction_id))
 
         bid_amount = float(request.form['bid_amount'])
         try:

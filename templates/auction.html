@@ -14,7 +14,12 @@
     <p><strong>Current Highest Bid:</strong> ₹<span id="current-price">{{ auction.current_price }}</span></p>
     <p><strong>Ends At:</strong> {{ auction.end_time }}</p>
 
-    {% if auction.status in ['ACTIVE', 'EXTENDED'] %}
+    {% if auction.seller_id is not none and session.get('user_id') is not none and auction.seller_id == session.get('user_id') %}
+    <div class="empty-state">
+        <strong>You are the seller of this auction.</strong>
+        <p>You can manage your listings from your dashboard, but you cannot place bids on your own items.</p>
+    </div>
+    {% elif auction.status in ['ACTIVE', 'EXTENDED'] %}
     <div class="form-shell">
         <h3>Place a Bid</h3>
         <form id="bid-form" method="POST">
